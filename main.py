@@ -8,7 +8,6 @@ def main():
     
     print("\nHere are some recommendations:")
     for movie in recommendations.get("results", []):
-        # Get the release year if available, otherwise show "N/A"
         release_year = "N/A"
         if 'release_date' in movie and movie['release_date']:
             try:

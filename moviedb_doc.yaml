@@ -2,29 +2,116 @@ openapi: 3.0.0
 info:
   title: Movie Database API
   version: 1.0.0
+  description: API for accessing The Movie Database (TMDb) movie information
 servers:
   - url: https://api.themoviedb.org/3
 paths:
   /search/movie:
     get:
       summary: Search for movies
+      description: Find movies based on a text query
       parameters:
         - name: query
           in: query
           required: true
+          description: Text query to search for movies
           schema:
             type: string
         - name: api_key
           in: query
           required: true
+          description: Your TMDb API key
           schema:
             type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
   /movie/popular:
     get:
       summary: Get popular movies
+      description: Get a list of currently popular movies
       parameters:
         - name: api_key
           in: query
           required: true
+          description: Your TMDb API key
           schema:
             type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
+  /movie/top_rated:
+    get:
+      summary: Get top rated movies
+      description: Get a list of top rated movies
+      parameters:
+        - name: api_key
+          in: query
+          required: true
+          description: Your TMDb API key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Movie'
+components:
+  schemas:
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the movie
+        title:
+          type: string
+          description: Movie title
+        overview:
+          type: string
+          description: Movie description/summary
+        release_date:
+          type: string
+          format: date
+          description: Movie release date (YYYY-MM-DD)
+          nullable: true
+        popularity:
+          type: number
+          format: float
+          description: Movie popularity score
+        vote_average:
+          type: number
+          format: float
+          description: Average rating
+        vote_count:
+          type: integer
+          description: Number of votes
+        poster_path:
+          type: string
+          nullable: true
+          description: Relative path to poster image
