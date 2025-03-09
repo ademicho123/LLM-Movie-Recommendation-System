@@ -12,8 +12,13 @@ def main():
     # Get raw API response
     api_response = process_movie_request(user_query)
     
+    # Check if the API response is valid
+    if not api_response or "results" not in api_response:
+        print("\nSorry, we couldn't find any movies matching your request.")
+        return
+    
     # Use LLM to format the response in a user-friendly way
-    formatted_response = llm.predict(
+    formatted_response = llm.invoke(
         f"""
         Based on the user's request: "{user_query}"
         
@@ -30,7 +35,11 @@ def main():
     )
     
     print("\nHere are your personalized movie recommendations:")
-    print(formatted_response)
+    # Extract just the content from the response
+    if hasattr(formatted_response, 'content'):
+        print(formatted_response.content)
+    else:
+        print(str(formatted_response))
 
 if __name__ == "__main__":
     main()

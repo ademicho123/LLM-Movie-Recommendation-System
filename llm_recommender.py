@@ -56,15 +56,43 @@ movie_api_prompt = PromptTemplate(
     """
 )
 
-# Create enhanced API Chain
-api_docs = load_api_docs()
-api_chain = APIChain.from_llm_and_api_docs(
-    llm=llm,
-    api_docs=api_docs,
-    prompt=movie_api_prompt,
-    headers={"Authorization": f"Bearer {MOVIE_DB_API_KEY}"},
-    limit_to_domains=["api.themoviedb.org"]
-)
+# Extract movie keywords for better searching
+def extract_keywords(user_query):
+    """Extract relevant keywords from a user query for better movie search"""
+    # Map common request patterns to relevant search terms
+    query_mapping = {
+        "laugh": "comedy",
+        "funny": "comedy",
+        "scare": "horror",
+        "scary": "horror",
+        "action": "action",
+        "thrill": "thriller",
+        "romantic": "romance",
+        "love story": "romance",
+        "scifi": "science fiction",
+        "sci-fi": "science fiction",
+        "science fiction": "science fiction",
+        "drama": "drama",
+        "documentary": "documentary",
+        "animation": "animation",
+        "cartoon": "animation",
+        "family": "family"
+    }
+    
+    # Convert query to lowercase for matching
+    query_lower = user_query.lower()
+    
+    # Check for keyword matches
+    for key, value in query_mapping.items():
+        if key in query_lower:
+            return value
+    
+    # If no specific matches, return the original query but remove common phrases
+    cleaned_query = query_lower.replace("i want", "").replace("movie that will", "").replace("looking for", "")
+    cleaned_query = cleaned_query.replace("i'm looking for", "").replace("can you recommend", "")
+    cleaned_query = cleaned_query.strip()
+    
+    return cleaned_query
 
 def process_movie_request(user_query):
     """
@@ -72,17 +100,25 @@ def process_movie_request(user_query):
     This lets the LLM determine which endpoint to use based on understanding the query.
     """
     try:
-        # Run the query through the API Chain
-        response = api_chain.run(user_query)
-        return response
-    except Exception as e:
-        print(f"Error processing request: {e}")
-        # Fallback to direct API calls if the chain fails
-        from api_utils import search_movie, get_popular_movies, get_top_rated_movies
-        
+        # If the query is about popular or top-rated movies, use those endpoints
         if "popular" in user_query.lower():
+            from api_utils import get_popular_movies
             return get_popular_movies()
         elif "top rated" in user_query.lower() or "best" in user_query.lower():
+            from api_utils import get_top_rated_movies
             return get_top_rated_movies()
-        else:
-            return search_movie(user_query)
+        
+        # For generic queries, extract keywords and use search
+        from api_utils import search_movie
+        search_term = extract_keywords(user_query)
+        print(f"Searching for: {search_term}")
+        return search_movie(search_term)
+        
+    except Exception as e:
+        print(f"Error processing request: {e}")
+        # Fallback to direct API calls with extracted keywords
+        from api_utils import search_movie
+        
+        search_term = extract_keywords(user_query)
+        print(f"Fallback search for: {search_term}")
+        return search_movie(search_term)
